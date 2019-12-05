@@ -20,13 +20,11 @@ package com.example.android.marsrealestate.overview
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.liveData
 import com.example.android.marsrealestate.network.MarsApi
 import com.example.android.marsrealestate.network.MarsApiFilter
 import com.example.android.marsrealestate.network.MarsProperty
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 
 enum class MarsApiStatus { LOADING, ERROR, DONE }
@@ -60,6 +58,20 @@ class OverviewViewModel : ViewModel() {
     val navigateToSelectedProperty: LiveData<MarsProperty>
         get() = _navigateToSelectedProperty
 
+
+    val check = liveData(Dispatchers.IO) {
+
+        try {
+
+            val res = MarsApi.retrofitService.check(MarsApiFilter.SHOW_ALL.value)
+            if (res.isSuccessful)
+                emit(res)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     /**
      * Call getMarsRealEstateProperties() on init so we can display status immediately.
      */
@@ -74,14 +86,13 @@ class OverviewViewModel : ViewModel() {
 
         coroutineScope.launch {
             val getPropertiesDeferred = MarsApi.retrofitService.getProperties(filter.value)
-
             try {
                 _status.value = MarsApiStatus.LOADING
                 val listResult = getPropertiesDeferred.await()
                 _status.value = MarsApiStatus.DONE
 
-                if (listResult.isNotEmpty()) {
-                    _properties.value = listResult
+                if (listResult.isSuccessful) {
+                    _properties.value = listResult.body()
                 }
             } catch (e: Exception) {
                 _status.value = MarsApiStatus.ERROR

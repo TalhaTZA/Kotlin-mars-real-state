@@ -18,7 +18,9 @@
 package com.example.android.marsrealestate.overview
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -63,6 +65,11 @@ class OverviewFragment : Fragment() {
                 this.findNavController().navigate(OverviewFragmentDirections.actionShowDetail(it))
                 viewModel.displayPropertyDetailsComplete()
             }
+        })
+
+        viewModel.check.observe(this, Observer {
+            //Log.e("check", "${it.body()?.size}")
+            Toast.makeText(context, "${it.body()?.size}", Toast.LENGTH_LONG).show()
         })
 
         setHasOptionsMenu(true)
